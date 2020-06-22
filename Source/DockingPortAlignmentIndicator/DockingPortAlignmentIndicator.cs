@@ -33,6 +33,7 @@ using KSP.UI.Screens;
 
 using static NavyFish.LogWrapper;
 using System.Linq;
+using UnityEngine.Profiling;
 
 namespace NavyFish
 {
@@ -281,6 +282,9 @@ namespace NavyFish
         {
             Log($"Start (GameScene=={HighLogic.LoadedScene}, appLauncherButton=={appLauncherButton})");
             LoadPrefs();
+            if (Profiler.enabled) {
+                Log($"Profiling is enabled");
+            }
 
             updateToolBarButton();
 
@@ -386,12 +390,15 @@ namespace NavyFish
 
         private void OnGUI()
         {
+            Profiler.BeginSample("DPAI_OnGUI");
             onGaugeDraw();
             if (shouldDebug) OnDrawDebug();
+            Profiler.EndSample();
         }
 
         public void Update()
         {
+            Profiler.BeginSample("DPAI_Update");
             //print("DPAI_DEBUG Update()");
 
             if ( !HighLogic.LoadedSceneIsFlight ) {
@@ -449,6 +456,7 @@ namespace NavyFish
                 if (targetedDockingModule != null) calculateGaugeData();
                 drawIndicatorContentsToTexture();
             }
+            Profiler.EndSample();
         }
 
         private static bool isIVA()
@@ -470,6 +478,7 @@ namespace NavyFish
         /// <returns></returns>
         private static bool isCompatiblePort(ModuleDockingNode targetPort)
         {
+            Profiler.BeginSample("DPAI_isCompatiblePort");
             bool compatible = false;
 
             // Get the controlling docking port, or all of them
@@ -517,6 +526,7 @@ namespace NavyFish
                 }
             }
 
+            Profiler.EndSample();
             return compatible;
         }
 
@@ -524,6 +534,7 @@ namespace NavyFish
 
         private static void determineTargetPort()
         {
+            Profiler.BeginSample("DPAI_determineTargetPort");
             if (portWasCycled && dockingModulesList.Count > 1)
             {
                 if (cycledModuleIndex < 0 || cycledModuleIndex > (dockingModulesList.Count - 1))
@@ -541,7 +552,7 @@ namespace NavyFish
                 {
                     FlightGlobals.fetch.SetVesselTarget(targetedDockingModule);
                 }
-                return;
+                goto done;
             }
 
             if (lastActiveVessel != FlightGlobals.ActiveVessel || resetTarget)
@@ -789,6 +800,8 @@ namespace NavyFish
                 dockingModulesListIndex = -1;
                 dockingModulesList.Clear();
             }
+        done:
+            Profiler.EndSample();
         }
 
         private static void calculateGaugeData()
@@ -1499,6 +1512,7 @@ namespace NavyFish
 
         private static void drawTargetPortHUDIndicator()
         {
+            Profiler.BeginSample("DPAI_drawTargetPortHUDIndicator");
             //print("drawTargetPortIndicator: Start");
 
             // When we exit a scene with the DPAI window showing, the underlying GameObject
@@ -1552,7 +1566,9 @@ namespace NavyFish
             GUI.color = iconColor;
             GUI.DrawTexture(selectedPortHUDRect, targetPort, ScaleMode.ScaleToFit, true);
             GUI.color = originalColor;
+
             //print("drawTargetPortIndicator: End");
+            Profiler.EndSample();
         }
 
         public static void cycleReferencePoint(int direction)
